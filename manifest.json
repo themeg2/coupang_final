@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "쿠팡 통합 도구",
+  "version": "1.0.0",
+  "description": "쿠팡 상품정보 추출, 리뷰 수집, JSON 이미지 다운로드 통합 도구",
+  
+  "icons": {
+    "16": "icon/icon.png",
+    "32": "icon/icon.png",
+    "48": "icon/icon.png",
+    "128": "icon/icon.png"
+  },
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "clipboardWrite",
+    "tabs",
+    "downloads",
+    "scripting"
+  ],
+  
+  "host_permissions": [
+    "*://*.coupang.com/*"
+  ],
+  
+  "content_scripts": [
+    {
+      "matches": ["*://*.coupang.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "쿠팡 통합 도구",
+    "default_icon": {
+      "16": "icon/icon.png",
+      "32": "icon/icon.png",
+      "48": "icon/icon.png",
+      "128": "icon/icon.png"
+    }
+  },
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["image_roket/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
