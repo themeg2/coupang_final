@@ -73,12 +73,16 @@ document.addEventListener('DOMContentLoaded', function() {
             setStatus('loading', '상품 정보를 추출 중...');
             extractBtn.disabled = true;
             
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            // Find the most recently active tab in any window
+            const tabs = await chrome.tabs.query({ active: true });
+            const coupangTab = tabs.find(tab => tab.url && tab.url.includes('coupang.com'));
             
-            if (!tab.url.includes('coupang.com')) {
-                setStatus('error', '쿠팡 사이트에서만 사용 가능합니다.');
+            if (!coupangTab) {
+                setStatus('error', '쿠팡 사이트에서만 사용 가능합니다. 쿠팡 페이지를 열어주세요.');
                 return;
             }
+            
+            const tab = coupangTab;
             
             const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProducts' });
             
@@ -152,9 +156,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Review scraping functionality
     scrapeBtn.addEventListener('click', async () => {
-        let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        // Find the most recently active tab in any window
+        const tabs = await chrome.tabs.query({ active: true });
+        const coupangTab = tabs.find(tab => tab.url && tab.url.includes('coupang.com/vp/products/'));
         
-        if (tab.url && tab.url.includes("coupang.com/vp/products/")) {
+        if (coupangTab) {
+            const tab = coupangTab;
             const maxPages = parseInt(pageCountInput.value, 10);
             if (isNaN(maxPages) || maxPages < 1) {
                 setStatus('error', '페이지 수는 1 이상이어야 합니다.');
@@ -176,11 +183,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     const blob = new Blob(['\uFEFF' + reviewsJson], { type: 'application/json;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const timestamp = new Date().toISOString().slice(0, 19).replace(/[-T:]/g, "");
-                    const productId = response.productId || 'product';
+                    const productName = response.productName || response.productId || 'product';
                     
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `REVIEW_${timestamp}_${productId}.json`;
+                    link.download = `${productName}.json`;
                     link.click();
                     
                     setStatus('success', `${response.reviews.length}개 리뷰가 수집되어 다운로드되었습니다.`);
@@ -195,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
         } else {
-            setStatus('error', '쿠팡 상품 상세 페이지가 아닙니다.');
+            setStatus('error', '쿠팡 상품 상세 페이지를 열어주세요.');
         }
     });
 

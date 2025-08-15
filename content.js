@@ -162,6 +162,31 @@ function getProductNameFromCurrentPage() {
   return document.title.replace(' - 쿠팡!', '').trim();
 }
 
+// Get product name from current page
+function getProductNameFromCurrentPage() {
+  // Try multiple selectors for product name
+  const selectors = [
+    'h1.prod-buy-header__title',
+    '.prod-buy-header__title',
+    'h1[class*="title"]',
+    '.product-title',
+    '.prod-title',
+    'h1'
+  ];
+  
+  for (const selector of selectors) {
+    const element = document.querySelector(selector);
+    if (element && element.innerText.trim()) {
+      let productName = element.innerText.trim();
+      // 파일명에 사용할 수 없는 문자 제거
+      productName = productName.replace(/[<>:"/\\|?*]/g, '').substring(0, 50);
+      return productName;
+    }
+  }
+  
+  return 'product';
+}
+
 // Extract reviews from current page (리뷰수집 기능)
 async function extractReviewsFromCurrentPage(maxPages = 3) {
   const getText = (element, selector) => { 
@@ -207,6 +232,7 @@ async function extractReviewsFromCurrentPage(maxPages = 3) {
   try {
     const allReviews = [];
     const productId = getProductIdFromCurrentPage();
+    const productName = getProductNameFromCurrentPage();
 
     for (let i = 1; i <= maxPages; i++) {
       chrome.runtime.sendMessage({ action: 'reviewStatus', status: `${i} / ${maxPages} 페이지 수집 중...` });
@@ -241,7 +267,7 @@ async function extractReviewsFromCurrentPage(maxPages = 3) {
       }
     }
     
-    return { reviews: allReviews, productId: productId };
+    return { reviews: allReviews, productId: productId, productName: productName };
   } catch (error) {
     chrome.runtime.sendMessage({ action: 'reviewError', error: error.message });
     throw error;
@@ -258,7 +284,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'extractReviews') {
     const maxPages = request.maxPages || 3;
     extractReviewsFromCurrentPage(maxPages).then(result => {
-      sendResponse({ success: true, reviews: result.reviews, productId: result.productId });
+      sendResponse({ success: true, reviews: result.reviews, productId: result.productId, productName: result.productName });
     }).catch(error => {
       sendResponse({ success: false, error: error.message });
     });

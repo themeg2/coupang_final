@@ -26,8 +26,8 @@ chrome.action.onClicked.addListener(async (tab) => {
     chrome.windows.create({
         url: chrome.runtime.getURL('popup.html'),
         type: 'popup',
-        width: 460,
-        height: 700,
+        width: 800,
+        height: 1000,
         focused: true
     }, (window) => {
         mainWindow = window.id;
