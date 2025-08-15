@@ -1,13 +1,43 @@
 // Background script for the Chrome extension
+let mainWindow = null;
+
 chrome.runtime.onInstalled.addListener(() => {
     console.log('쿠팡 통합 도구 extension installed');
 });
 
-// Handle extension icon click
-chrome.action.onClicked.addListener((tab) => {
-    // Toggle floating popup on Coupang sites
-    if (tab.url.includes('coupang.com')) {
-        chrome.tabs.sendMessage(tab.id, { action: 'togglePopup' });
+// Handle extension icon click - open as standalone window
+chrome.action.onClicked.addListener(async (tab) => {
+    // Check if window already exists and is open
+    if (mainWindow) {
+        try {
+            const window = await chrome.windows.get(mainWindow);
+            if (window) {
+                // Focus existing window
+                chrome.windows.update(mainWindow, { focused: true });
+                return;
+            }
+        } catch (error) {
+            // Window doesn't exist anymore, create new one
+            mainWindow = null;
+        }
+    }
+    
+    // Create new standalone window
+    chrome.windows.create({
+        url: chrome.runtime.getURL('popup.html'),
+        type: 'popup',
+        width: 460,
+        height: 700,
+        focused: true
+    }, (window) => {
+        mainWindow = window.id;
+    });
+});
+
+// Handle window closed event
+chrome.windows.onRemoved.addListener((windowId) => {
+    if (windowId === mainWindow) {
+        mainWindow = null;
     }
 });
 
